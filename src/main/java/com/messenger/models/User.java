@@ -3,6 +3,7 @@ package com.messenger.models;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.annotation.Id;
 
 /**
  * Created by mamahendru on 4/9/17.
@@ -15,6 +16,8 @@ import java.util.UUID;
  * userid is unique identifier of user in messenger system.
  */
 public class User {
+    @Id
+    private String id;
     private String userId;
     private String firstName;
     private String lastName;
@@ -33,12 +36,28 @@ public class User {
         sessionId = UUID.randomUUID().toString();
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getUserId() {
         return userId;
     }
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
@@ -75,6 +94,10 @@ public class User {
 
     public List<User> getFriends () {
         return this.friends;
+    }
+
+    public void setFriends(List<User> friends) {
+        this.friends = friends;
     }
 
     public String getSessionId() {

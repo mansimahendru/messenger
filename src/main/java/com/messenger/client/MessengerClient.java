@@ -58,7 +58,7 @@ public class MessengerClient {
 
     public void send (String name, String message) {
         ChatMessage chatMessage = ChatMessage.newBuilder().setMessage(message).setTo(name).setFrom(this.userid).setSessionid(this.sessionid).build();
-        sendStub.send(chatMessage);
+        Response res = sendStub.send(chatMessage);
     }
 
     public void login (String userid, String password) {

@@ -9,7 +9,7 @@ service MessengerService {
     rpc register(RegisterRequest) returns (Response);
     rpc login(LoginRequest) returns (Response);
     rpc receive(ReceiveRequest) returns (stream ChatMessage);
-    rpc send(ChatMessage) returns (Empty);
+    rpc send(ChatMessage) returns (Response);
     rpc logout(Request) returns (Empty);
     rpc addFriend(FriendRequest) returns (Empty);
     rpc removeFriend(FriendRequest) returns (Empty);

@@ -1,9 +1,12 @@
 package com.messenger.server;
 
+import com.messenger.db.UserDAO;
 import com.messenger.models.Status;
 import com.messenger.proto.*;
 import io.grpc.stub.StreamObserver;
 import com.messenger.models.User;
+import com.messenger.models.Message;
+import com.messenger.db.MessageDAO;
 
 import java.util.Map;
 import java.util.List;
@@ -20,13 +23,12 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     * users contains all the registered users.
     * I have used concurrenthashmap for both to achieve high concurrency as well as thread safety
      */
-    //TODO ideally contents of map and users should be saved in permanenet storage like mongodb.
+    //TODO users need to be stored in permanent storage like mongodb.
     //TODO loggedin users data can be kept in distributed cache like teracotta etc.
     //TODO users logging in from multiple client sessions not implemented currently.
     //TODO - login method should connect to directory server and authenticate user
     //TODO send should spun a new thread just like receive
     //TODO receive should use ExecuterService to ensure threads do not go out of control.
-    private Map<String, List<ChatMessage>> map = new ConcurrentHashMap<String, List<ChatMessage>>();
     private Map<String, User> users = new ConcurrentHashMap<String, User>();
 
     /**
@@ -40,7 +42,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      */
     @Override
     public void receive(ReceiveRequest request, StreamObserver<ChatMessage> chatObserver) {
-        ReceiverThread receiverThread = new ReceiverThread(chatObserver, request.getUserid(), request.getSessionid());
+        ReceiverMongoDBThread receiverThread = new ReceiverMongoDBThread(chatObserver, request.getUserid(), request.getSessionid());
         new Thread(receiverThread).start();
     }
 
@@ -53,17 +55,20 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      * This should also spun a new thread so as to not block incoming requests.
      */
     @Override
-    public void send (ChatMessage chatMessage, final StreamObserver<Empty> client) {
-        if(isValidSession(chatMessage.getFrom(), chatMessage.getSessionid())) {
-            User user = users.get(chatMessage.getFrom());
-            List<ChatMessage> list = map.get(chatMessage.getTo());
-            if (list == null) {
-                list = new ArrayList<ChatMessage>();
+    public void send (ChatMessage chatMessage, final StreamObserver<Response> client) {
+        Response res;
+        try {
+            if (isValidSession(chatMessage.getFrom(), chatMessage.getSessionid())) {
+                User user = users.get(chatMessage.getFrom());
+                Message message = new Message(chatMessage.getTo(), chatMessage.getFrom(), chatMessage.getMessage());
+                new MessageDAO().addMessage(message);
             }
-            list.add(chatMessage);
-            map.put(chatMessage.getTo(), list);
+            res = Response.newBuilder().setMessage("ok").build();
+        }catch(Exception ex){
+            //user needs to know if exception occured.
+            res = Response.newBuilder().setMessage("Couldnot save message").build();
         }
-        client.onNext(Empty.newBuilder().build());
+        client.onNext(res);
         client.onCompleted();
     }
 
@@ -77,13 +82,16 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     public void register(RegisterRequest request, final StreamObserver<Response> streamObserver) {
         User existingUser = users.get(request.getUserid());
         Response res;
-        if(existingUser != null) {
-            res = Response.newBuilder().setMessage("User already registered").build();
-        }
-        else {
-            User user = new User(request.getUserid(), request.getPassword(), request.getFirstname(), request.getLastname());
-            users.put(request.getUserid(), user);
-            res = Response.newBuilder().setMessage("Welcome").build();
+        try {
+            if (existingUser != null) {
+                res = Response.newBuilder().setMessage("User already registered").build();
+            } else {
+                User user = new User(request.getUserid(), request.getPassword(), request.getFirstname(), request.getLastname());
+                users.put(request.getUserid(), user);
+                res = Response.newBuilder().setMessage("Welcome").build();
+            }
+        } catch(Exception ex) {
+            res = Response.newBuilder().setMessage("Failed to register").build();
         }
         streamObserver.onNext(res);
         streamObserver.onCompleted();
@@ -193,13 +201,14 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     }
 
     /**
-     * ReceiverThread to handle the sending of messages to client session
+     * ReceiverThread to handle the sending of messages to client session.
+     * This thread gets the messages saved in mongodb.
      */
-    private class ReceiverThread implements Runnable {
+    private class ReceiverMongoDBThread implements Runnable {
         StreamObserver<ChatMessage> chatObserver = null;
         String name = null;
         String sessionid = null;
-        public ReceiverThread(StreamObserver<ChatMessage> chatObserver, String name, String sessionid) {
+        public ReceiverMongoDBThread(StreamObserver<ChatMessage> chatObserver, String name, String sessionid) {
             this.chatObserver = chatObserver;
             this.name = name;
             this.sessionid = sessionid;
@@ -208,12 +217,12 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             System.out.println("messaged for : " + this.name);
             User user = users.get(name);
             if(isValidSession(this.name, this.sessionid)) {
-                List<ChatMessage> messages = map.get(this.name);
+                List<Message> messages = new MessageDAO().getMessages(this.name);
                 if (messages != null) {
-                    for (ChatMessage msg : messages) {
-                        chatObserver.onNext(msg);
+                    for(Message msg : messages){
+                        ChatMessage chatMessage = ChatMessage.newBuilder().setTo(msg.getTo()).setFrom(msg.getFrom()).setMessage(msg.getMessage()).build();
+                        chatObserver.onNext(chatMessage);
                     }
-                    messages.clear();
                 }
             }
             chatObserver.onCompleted();
