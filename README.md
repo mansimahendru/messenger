@@ -1,5 +1,5 @@
 # messenger
-# This is messenger server and client
+# Messenger Server and Client
 messenger server supports sending messages to your friends <br>
 messager server supports maintaining contact list and allows to add and remove friends <br>
 messenger client is a simple program that when started first register user then logs in and then waits to send messages at the same time waiting to receive messages <br>
