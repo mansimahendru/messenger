@@ -7,14 +7,14 @@ messenger client is a simple program that when started first register user then 
 # Dev set up
 messenger is based on GRPC protocol
 
-install protobuf compiler
-install maven
-git clone https://github.com/mansimahendru/messenger.git
-open command window. run mvn clean package install
+install protobuf compiler <br>
+install maven <br>
+git clone https://github.com/mansimahendru/messenger.git <br>
+open command window. run mvn clean package install <br>
 
-to start server open new terminal and execute
-mvn exec:java -Dexec.mainClass=com.messenger.server.MessengerServer
-to start client open new terminal and execute
-mvn exec:java -Dexec.mainClass=com.messenger.client.MessengerClient -Dexec.args="userid"
-to send message type following in client terminal
-userid:message
+to start server open new terminal and execute <br>
+mvn exec:java -Dexec.mainClass=com.messenger.server.MessengerServer <br>
+to start client open new terminal and execute <br>
+mvn exec:java -Dexec.mainClass=com.messenger.client.MessengerClient -Dexec.args="userid" <br>
+to send message type following in client terminal <br>
+userid:message <br>
