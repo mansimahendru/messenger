@@ -160,6 +160,24 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     }
 
     /**
+     *
+     * @param request
+     * @param observer
+     * Returns user's contact list with status of each user in contact list.
+     */
+
+    public void contacts (Request request, final StreamObserver<Response> observer) {
+        User user = users.get(request.getNickname());
+        if(isValidSession(request.getNickname(), request.getSessionid())){
+            for(User u : user.getFriends()){
+                Response res = Response.newBuilder().setMessage(u.getUserId() + ":" + u.getStatus()).build();
+                observer.onNext(res);
+            }
+        }
+        observer.onCompleted();
+    }
+
+    /**
      * User has sessionid which is set during login/register. It is unset during logout.
      * Non null sessionid means user is logged in.
      * This session id is sent to client from where user is logged in.

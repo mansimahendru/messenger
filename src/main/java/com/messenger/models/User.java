@@ -73,6 +73,10 @@ public class User {
         friends.remove(user);
     }
 
+    public List<User> getFriends () {
+        return this.friends;
+    }
+
     public String getSessionId() {
         return this.sessionId;
     }

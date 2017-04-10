@@ -13,7 +13,7 @@ service MessengerService {
     rpc logout(Request) returns (Empty);
     rpc addFriend(FriendRequest) returns (Empty);
     rpc removeFriend(FriendRequest) returns (Empty);
-    rpc contacts(Request) returns (Response);
+    rpc contacts(Request) returns (stream Response);
 }
 
 message Response {
