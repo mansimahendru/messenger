@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+option java_package = "com.messenger.proto";
+option java_multiple_files = true;
+
+package messenger;
+
+service MessengerService {
+    rpc register(RegisterRequest) returns (Response);
+    rpc login(LoginRequest) returns (Response);
+    rpc receive(ReceiveRequest) returns (stream ChatMessage);
+    rpc send(ChatMessage) returns (Empty);
+    rpc logout(Request) returns (Empty);
+    rpc addFriend(FriendRequest) returns (Empty);
+    rpc removeFriend(FriendRequest) returns (Empty);
+    rpc contacts(Request) returns (Response);
+}
+
+message Response {
+    string message = 1;
+}
+
+message Request {
+    string nickname = 1;
+    string sessionid = 2;
+}
+
+message ChatMessage {
+    string to = 1;
+    string from = 2;
+    string message = 3;
+    string sessionid = 4;
+}
+
+message ReceiveRequest {
+    string userid = 1;
+    string sessionid = 2;
+}
+
+message RegisterRequest {
+    string userid = 1;
+    string firstname = 2;
+    string lastname = 3;
+    string password = 4;
+}
+
+message LoginRequest {
+    string userid = 1;
+    string password = 2;
+}
+
+message FriendRequest {
+    string user = 1;
+    string friend = 2;
+    string sessionid = 3;
+}
+
+message Empty {}
+
