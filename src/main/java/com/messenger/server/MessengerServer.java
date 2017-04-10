@@ -10,6 +10,8 @@ import java.io.IOException;
 
 /**
  * Created by mamahendru on 4/8/17.
+ * This is the MessengerServer which listens on port 50051 and exposes interfaces implemented by MessengerServiceImpl.
+ * Port should be configurable value.
  */
 public class MessengerServer {
 
@@ -31,10 +33,9 @@ public class MessengerServer {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                // Use stderr here since the logger may have been reset by its JVM shutdown hook.
-                System.err.println("*** shutting down gRPC server since JVM is shutting down");
+                System.err.println("Shutting down server");
                 MessengerServer.this.stop();
-                System.err.println("*** server shut down");
+                System.err.println("Server shutdown complete");
             }
         });
     }
