@@ -20,6 +20,7 @@ public class MessengerClient {
     private final MessengerServiceGrpc.MessengerServiceBlockingStub receiverStub;
     private final MessengerServiceGrpc.MessengerServiceBlockingStub loginStub;
     private final MessengerServiceGrpc.MessengerServiceBlockingStub registerStub;
+    private final MessengerServiceGrpc.MessengerServiceBlockingStub logoutStub;
     private final String userid;
     private String sessionid = null;
 
@@ -32,7 +33,8 @@ public class MessengerClient {
         sendStub = MessengerServiceGrpc.newBlockingStub(channel);
         receiverStub = MessengerServiceGrpc.newBlockingStub(channel);
         loginStub = MessengerServiceGrpc.newBlockingStub(channel);
-        registerStub = MessengerServiceGrpc.newBlockingStub(channel);;
+        registerStub = MessengerServiceGrpc.newBlockingStub(channel);
+        logoutStub = MessengerServiceGrpc.newBlockingStub(channel);
     }
 
     public void shutdown() throws InterruptedException {
@@ -71,6 +73,11 @@ public class MessengerClient {
         System.out.println(res.getMessage());
     }
 
+    public void logout (String userid) {
+        Request request = Request.newBuilder().setNickname(userid).setSessionid(this.sessionid).build();
+        logoutStub.logout(request);
+    }
+
     public static void main(String[] args) throws Exception {
         System.out.println("Starting client");
         MessengerClient client = null;
@@ -95,6 +102,7 @@ public class MessengerClient {
                     String msg = scanner.next();
                     if (msg.equalsIgnoreCase("bye")) {
                         receiverThread.interrupt();
+                        client.logout(userid);
                         break;
                     }
                     String[] parts = msg.split(":");
