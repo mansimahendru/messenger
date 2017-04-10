@@ -6,6 +6,13 @@ import java.util.UUID;
 
 /**
  * Created by mamahendru on 4/9/17.
+ * User is the registered user of the messenger
+ * friends maintains the list of contacts of user
+ * friends are kept at serer side so if user logs in from any client, it always has correct contact list
+ * sessionid is used to identify user's session
+ * sessionid ensures that one user cannot see another user's message or update contact list
+ * status is user's status in messenger system. This can also be used to determine presense though it is currently not implemented.
+ * userid is unique identifier of user in messenger system.
  */
 public class User {
     private String userId;
