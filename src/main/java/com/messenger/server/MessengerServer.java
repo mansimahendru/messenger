@@ -1,11 +1,7 @@
 package com.messenger.server;
 
-import com.messenger.proto.Request;
-import com.messenger.proto.MessengerServiceGrpc;
-import com.messenger.proto.Response;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
-import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 
 /**
