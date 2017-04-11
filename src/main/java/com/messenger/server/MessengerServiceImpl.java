@@ -118,10 +118,16 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      */
     @Override
     public void login(LoginRequest request, final StreamObserver<Response> streamObserver) {
-        User user = users.get(request.getUserid());
-        user.setStatus(Status.ACTIVE);
-        user.setSessionId(UUID.randomUUID().toString());
-        Response res = Response.newBuilder().setMessage(user.getSessionId()).build();
+        Response res;
+        try {
+            User user = users.get(request.getUserid());
+            user.setStatus(Status.ACTIVE);
+            user.setSessionId(UUID.randomUUID().toString());
+            res = Response.newBuilder().setMessage(user.getSessionId()).build();
+        }
+        catch(Exception ex){
+            res = Response.newBuilder().setMessage("login failed").build();
+        }
         streamObserver.onNext(res);
         streamObserver.onCompleted();
 
@@ -134,15 +140,23 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      * add list to contact list.
      */
     @Override
-    public void addFriend(FriendRequest request, final StreamObserver<Empty> observer) {
-        if(isValidSession(request.getUser(), request.getSessionid())) {
-            User user = users.get(request.getUser());
-            User friend = users.get(request.getFriend());
-            if (user != null && friend != null) {
-                user.addFriend(friend);
+    public void addFriend(FriendRequest request, final StreamObserver<Response> observer) {
+        Response res;
+        try {
+            res = Response.newBuilder().setMessage("Not a valid session").build();
+            if (isValidSession(request.getUser(), request.getSessionid())) {
+                User user = users.get(request.getUser());
+                User friend = users.get(request.getFriend());
+                if (user != null && friend != null) {
+                    user.addFriend(friend);
+                }
+                res = Response.newBuilder().setMessage("friend added").build();
             }
         }
-        observer.onNext(Empty.newBuilder().build());
+        catch(Exception ex){
+            res = Response.newBuilder().setMessage("Failed to add a friend").build();
+        }
+        observer.onNext(res);
         observer.onCompleted();
     }
 
@@ -153,15 +167,23 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      * remove friend from contact list.
      */
     @Override
-    public void removeFriend(FriendRequest request, final StreamObserver<Empty> observer) {
-        if(isValidSession(request.getUser(), request.getSessionid())) {
-            User user = users.get(request.getUser());
-            User friend = users.get(request.getFriend());
-            if (user != null && friend != null) {
-                user.removeFriend(friend);
+    public void removeFriend(FriendRequest request, final StreamObserver<Response> observer) {
+        Response res;
+        try {
+            res = Response.newBuilder().setMessage("Not a valid session").build();
+            if (isValidSession(request.getUser(), request.getSessionid())) {
+                User user = users.get(request.getUser());
+                User friend = users.get(request.getFriend());
+                if (user != null && friend != null) {
+                    user.removeFriend(friend);
+                }
+                res = Response.newBuilder().setMessage("friend removed").build();
             }
         }
-        observer.onNext(Empty.newBuilder().build());
+        catch(Exception ex){
+            res = Response.newBuilder().setMessage("failed to remove friend").build();
+        }
+        observer.onNext(res);
         observer.onCompleted();
     }
 
@@ -172,11 +194,18 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      * Resets the sessionid. After this user cannot send message/receive message/update contact list.
      */
     @Override
-    public void logout(Request request, final StreamObserver<Empty> client) {
-        User user = users.get(request.getNickname());
-        user.setStatus(Status.SIGNEDOUT);
-        user.setSessionId(null);
-        client.onNext(Empty.newBuilder().build());
+    public void logout(Request request, final StreamObserver<Response> client) {
+        Response res;
+        try {
+            User user = users.get(request.getNickname());
+            user.setStatus(Status.SIGNEDOUT);
+            user.setSessionId(null);
+            res = Response.newBuilder().setMessage("Bye").build();
+        }
+        catch(Exception ex){
+            res = Response.newBuilder().setMessage("Failed to logout").build();
+        }
+        client.onNext(res);
         client.onCompleted();
     }
 
@@ -188,12 +217,19 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      */
 
     public void contacts (Request request, final StreamObserver<Response> observer) {
-        User user = users.get(request.getNickname());
-        if(isValidSession(request.getNickname(), request.getSessionid())){
-            for(User u : user.getFriends()){
-                Response res = Response.newBuilder().setMessage(u.getUserId() + ":" + u.getStatus()).build();
-                observer.onNext(res);
+        Response res;
+        try {
+            User user = users.get(request.getNickname());
+            if (isValidSession(request.getNickname(), request.getSessionid())) {
+                for (User u : user.getFriends()) {
+                    res = Response.newBuilder().setMessage(u.getUserId() + ":" + u.getStatus()).build();
+                    observer.onNext(res);
+                }
             }
+        }
+        catch(Exception ex){
+            res = Response.newBuilder().setMessage("Failed to obtain contacts").build();
+            observer.onNext(res);
         }
         observer.onCompleted();
     }
@@ -227,7 +263,6 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             this.sessionid = sessionid;
         }
         public void run() {
-            System.out.println("messaged for : " + this.name);
             User user = users.get(name);
             if(isValidSession(this.name, this.sessionid)) {
                 List<Message> messages = messageDAO.getMessages(this.name);

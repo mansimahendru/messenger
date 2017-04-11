@@ -10,9 +10,9 @@ service MessengerService {
     rpc login(LoginRequest) returns (Response);
     rpc receive(ReceiveRequest) returns (stream ChatMessage);
     rpc send(ChatMessage) returns (Response);
-    rpc logout(Request) returns (Empty);
-    rpc addFriend(FriendRequest) returns (Empty);
-    rpc removeFriend(FriendRequest) returns (Empty);
+    rpc logout(Request) returns (Response);
+    rpc addFriend(FriendRequest) returns (Response);
+    rpc removeFriend(FriendRequest) returns (Response);
     rpc contacts(Request) returns (stream Response);
 }
 
@@ -54,6 +54,4 @@ message FriendRequest {
     string friend = 2;
     string sessionid = 3;
 }
-
-message Empty {}
 

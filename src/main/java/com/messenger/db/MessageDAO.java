@@ -39,6 +39,7 @@ public class MessageDAO {
             mongoOps.insert(message, MESSAGE_COLLECTION);
         }
         catch(Exception ex){
+            //throw exception as user needs to know send message failed
             throw ex;
         }
         finally {
@@ -64,6 +65,7 @@ public class MessageDAO {
             return messages;
         }
         catch(Exception ex){
+            //If exception, return null.
             ex.printStackTrace();
         }
         finally {
