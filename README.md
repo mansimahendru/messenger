@@ -31,4 +31,3 @@ userid:message <br>
 Users needs to be stored on mongodb. This is work in progress. <br>
 Need to add test cases. <br>
 Need to complete error handling. <br>
-Need to add properties file for configuration. <br>

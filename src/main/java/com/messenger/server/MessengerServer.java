@@ -4,12 +4,17 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import java.io.IOException;
 
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 /**
  * Created by mamahendru on 4/8/17.
  * This is the MessengerServer which listens on port 50051 and exposes interfaces implemented by MessengerServiceImpl.
  * Port should be configurable value.
  */
 public class MessengerServer {
+
+    protected static final String CONFIG_PATH = "classpath*:spring-config.xml";
 
     private Server server;
 
@@ -21,9 +26,11 @@ public class MessengerServer {
     }
 
     private void start() throws IOException {
-        int port = 50051;
+        final ApplicationContext context = new ClassPathXmlApplicationContext(CONFIG_PATH);
+        MessengerServiceImpl service = context.getBean(MessengerServiceImpl.class);
+        int port = Integer.parseInt(service.configEnv.getProperty("server.port"));
         server = ServerBuilder.forPort(port)
-                .addService(new MessengerServiceImpl())
+                .addService(service)
                 .build()
                 .start();
         Runtime.getRuntime().addShutdownHook(new Thread() {

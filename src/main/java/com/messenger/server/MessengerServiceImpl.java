@@ -8,16 +8,29 @@ import com.messenger.models.User;
 import com.messenger.models.Message;
 import com.messenger.db.MessageDAO;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Properties;
 
 /**
  * Created by mamahendru on 4/8/17.
  */
+@Service
 public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceImplBase {
+    @Autowired
+    @Qualifier("configEnv")
+    protected Properties configEnv;
+    @Autowired
+    MessageDAO messageDAO;
+    @Autowired
+    UserDAO userDAO;
     /**
     * map contains messages for each user.
     * users contains all the registered users.
@@ -61,7 +74,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             if (isValidSession(chatMessage.getFrom(), chatMessage.getSessionid())) {
                 User user = users.get(chatMessage.getFrom());
                 Message message = new Message(chatMessage.getTo(), chatMessage.getFrom(), chatMessage.getMessage());
-                new MessageDAO().addMessage(message);
+                messageDAO.addMessage(message);
             }
             res = Response.newBuilder().setMessage("ok").build();
         }catch(Exception ex){
@@ -217,7 +230,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             System.out.println("messaged for : " + this.name);
             User user = users.get(name);
             if(isValidSession(this.name, this.sessionid)) {
-                List<Message> messages = new MessageDAO().getMessages(this.name);
+                List<Message> messages = messageDAO.getMessages(this.name);
                 if (messages != null) {
                     for(Message msg : messages){
                         ChatMessage chatMessage = ChatMessage.newBuilder().setTo(msg.getTo()).setFrom(msg.getFrom()).setMessage(msg.getMessage()).build();
