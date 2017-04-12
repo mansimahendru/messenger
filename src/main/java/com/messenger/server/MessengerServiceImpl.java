@@ -276,6 +276,12 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
         }
     }
 
+    /**
+     * SendMongoDBThread executes send in a separate thread.
+     * It saves the message in mongoDB.
+     * This implementation unblocks send method on service.
+     */
+
     private class SendMongoDBThread implements Runnable {
         ChatMessage chatMessage;
         StreamObserver<Response> observer;
