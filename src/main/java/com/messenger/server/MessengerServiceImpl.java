@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by mamahendru on 4/8/17.
@@ -40,9 +42,12 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     //TODO loggedin users data can be kept in distributed cache like teracotta etc.
     //TODO users logging in from multiple client sessions not implemented currently.
     //TODO - login method should connect to directory server and authenticate user
-    //TODO send should spun a new thread just like receive
-    //TODO receive should use ExecuterService to ensure threads do not go out of control.
     private Map<String, User> users = new ConcurrentHashMap<String, User>();
+    private ExecutorService pool;
+
+    public MessengerServiceImpl() {
+        pool = Executors.newCachedThreadPool();
+    }
 
     /**
      *
@@ -56,7 +61,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     @Override
     public void receive(ReceiveRequest request, StreamObserver<ChatMessage> chatObserver) {
         ReceiverMongoDBThread receiverThread = new ReceiverMongoDBThread(chatObserver, request.getUserid(), request.getSessionid());
-        new Thread(receiverThread).start();
+        pool.submit(receiverThread);
     }
 
     /**
@@ -69,20 +74,8 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
      */
     @Override
     public void send (ChatMessage chatMessage, final StreamObserver<Response> client) {
-        Response res;
-        try {
-            if (isValidSession(chatMessage.getFrom(), chatMessage.getSessionid())) {
-                User user = users.get(chatMessage.getFrom());
-                Message message = new Message(chatMessage.getTo(), chatMessage.getFrom(), chatMessage.getMessage());
-                messageDAO.addMessage(message);
-            }
-            res = Response.newBuilder().setMessage("ok").build();
-        }catch(Exception ex){
-            //user needs to know if exception occured.
-            res = Response.newBuilder().setMessage("Couldnot save message").build();
-        }
-        client.onNext(res);
-        client.onCompleted();
+        SendMongoDBThread sendThread = new SendMongoDBThread(chatMessage, client);
+        pool.submit(sendThread);
     }
 
     /**
@@ -280,6 +273,31 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
                 }
             }
             chatObserver.onCompleted();
+        }
+    }
+
+    private class SendMongoDBThread implements Runnable {
+        ChatMessage chatMessage;
+        StreamObserver<Response> observer;
+        public SendMongoDBThread(ChatMessage chatMessage, StreamObserver<Response> observer) {
+            this.chatMessage = chatMessage;
+            this.observer = observer;
+        }
+        public void run() {
+            Response res;
+            try {
+                if (isValidSession(chatMessage.getFrom(), chatMessage.getSessionid())) {
+                    User user = users.get(chatMessage.getFrom());
+                    Message message = new Message(chatMessage.getTo(), chatMessage.getFrom(), chatMessage.getMessage());
+                    messageDAO.addMessage(message);
+                }
+                res = Response.newBuilder().setMessage("ok").build();
+            }catch(Exception ex){
+                //user needs to know if exception occured.
+                res = Response.newBuilder().setMessage("Couldnot save message").build();
+            }
+            observer.onNext(res);
+            observer.onCompleted();
         }
     }
 }
