@@ -143,14 +143,20 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     public void addFriend(FriendRequest request, final StreamObserver<Response> observer) {
         Response res;
         try {
-            res = Response.newBuilder().setMessage("Not a valid session").build();
             if (isValidSession(request.getUser(), request.getSessionid())) {
                 User user = users.get(request.getUser());
                 User friend = users.get(request.getFriend());
                 if (user != null && friend != null) {
                     user.addFriend(friend);
+                    res = Response.newBuilder().setMessage("friend added").build();
                 }
-                res = Response.newBuilder().setMessage("friend added").build();
+                else {
+                    res = Response.newBuilder().setMessage("No such user exist").build();
+                }
+
+            }
+            else{
+                res = Response.newBuilder().setMessage("Not a valid session").build();
             }
         }
         catch(Exception ex){
