@@ -18,7 +18,9 @@ install protobuf compiler <br>
 install mongodb <br>
 install maven <br>
 git clone https://github.com/mansimahendru/messenger.git <br>
-open command window. run mvn clean package install <br>
+open terminal. Go to messenger folder. run mvn clean package install <br>
+open mongo shell. <br>
+create database messengerdb. Create collections user and messages in messengerdb. <br>
 
 to start server open new terminal and execute <br>
 mvn exec:java -Dexec.mainClass=com.messenger.server.MessengerServer <br>
