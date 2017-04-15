@@ -18,6 +18,7 @@ import org.springframework.data.annotation.Id;
 public class User {
     @Id
     private String id;
+    private String email;
     private String userId;
     private String firstName;
     private String lastName;
@@ -26,7 +27,8 @@ public class User {
     private List<User> friends;
     private String sessionId;
 
-    public User(String userId, String password, String firstName, String lastName) {
+    public User(String email, String userId, String password, String firstName, String lastName) {
+        this.email = email;
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -34,6 +36,14 @@ public class User {
         this.status = Status.ACTIVE;
         friends = new ArrayList<User>();
         sessionId = UUID.randomUUID().toString();
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getId() {
@@ -115,11 +125,7 @@ public class User {
 
         User user = (User) o;
 
-        if (!firstName.equals(user.firstName)) return false;
-        if (!friends.equals(user.friends)) return false;
-        if (!lastName.equals(user.lastName)) return false;
-        if (!password.equals(user.password)) return false;
-        if (status != user.status) return false;
+        if (!email.equals(user.email)) return false;
         if (!userId.equals(user.userId)) return false;
 
         return true;
@@ -127,12 +133,8 @@ public class User {
 
     @Override
     public int hashCode() {
-        int result = userId.hashCode();
-        result = 31 * result + firstName.hashCode();
-        result = 31 * result + lastName.hashCode();
-        result = 31 * result + password.hashCode();
-        result = 31 * result + status.hashCode();
-        result = 31 * result + friends.hashCode();
+        int result = email.hashCode();
+        result = 31 * result + userId.hashCode();
         return result;
     }
 }

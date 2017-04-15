@@ -42,6 +42,7 @@ message RegisterRequest {
     string firstname = 2;
     string lastname = 3;
     string password = 4;
+    string email = 5;
 }
 
 message LoginRequest {

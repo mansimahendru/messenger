@@ -67,8 +67,8 @@ public class MessengerClient {
         this.sessionid = res.getMessage();
     }
 
-    public void register (String userid) {
-        RegisterRequest request = RegisterRequest.newBuilder().setUserid(userid).setPassword("password123").setFirstname(userid).setLastname("anything").build();
+    public void register (String userid, String email) {
+        RegisterRequest request = RegisterRequest.newBuilder().setEmail(email).setUserid(userid).setPassword("password123").setFirstname(userid).setLastname("anything").build();
         Response res = registerStub.register(request);
         System.out.println(res.getMessage());
     }
@@ -83,15 +83,17 @@ public class MessengerClient {
         MessengerClient client = null;
         try {
             String userid = "";
-            if (args!= null && args.length > 0) {
+            String email = "";
+            if (args!= null && args.length > 1) {
                 userid = args[0];
+                email = args[1];
             }
             else {
-                System.out.println("Command line argument for username needed");
+                System.out.println("Command line argument for username and email needed");
                 System.exit(1);
             }
             client = new MessengerClient(userid);
-            client.register(userid);
+            client.register(userid, email);
             client.login(userid, "password123");
             Receiver receiver = new Receiver(client);
             Thread receiverThread = new Thread(receiver);

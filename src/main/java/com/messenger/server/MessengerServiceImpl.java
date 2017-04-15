@@ -92,8 +92,9 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             if (existingUser != null) {
                 res = Response.newBuilder().setMessage("User already registered").build();
             } else {
-                User user = new User(request.getUserid(), request.getPassword(), request.getFirstname(), request.getLastname());
+                User user = new User(request.getEmail(), request.getUserid(), request.getPassword(), request.getFirstname(), request.getLastname());
                 users.put(request.getUserid(), user);
+                userDAO.addUser(user);
                 res = Response.newBuilder().setMessage("Welcome").build();
             }
         } catch(Exception ex) {
@@ -113,10 +114,21 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     public void login(LoginRequest request, final StreamObserver<Response> streamObserver) {
         Response res;
         try {
-            User user = users.get(request.getUserid());
-            user.setStatus(Status.ACTIVE);
-            user.setSessionId(UUID.randomUUID().toString());
-            res = Response.newBuilder().setMessage(user.getSessionId()).build();
+            User user = getUser(request.getUserid());
+            if(user != null) {
+                if(user.getPassword().equalsIgnoreCase(request.getPassword())) {
+                    user.setStatus(Status.ACTIVE);
+                    user.setSessionId(UUID.randomUUID().toString());
+                    res = Response.newBuilder().setMessage(user.getSessionId()).build();
+                }
+                else {
+                    res = Response.newBuilder().setMessage("user id or password do not match").build();
+                }
+            }
+            else {
+                res = Response.newBuilder().setMessage("No such user found").build();
+            }
+
         }
         catch(Exception ex){
             res = Response.newBuilder().setMessage("login failed").build();
@@ -137,10 +149,11 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
         Response res;
         try {
             if (isValidSession(request.getUser(), request.getSessionid())) {
-                User user = users.get(request.getUser());
-                User friend = users.get(request.getFriend());
+                User user = getUser(request.getUser());
+                User friend = getUser(request.getFriend());
                 if (user != null && friend != null) {
                     user.addFriend(friend);
+                    userDAO.updateUser(user);
                     res = Response.newBuilder().setMessage("friend added").build();
                 }
                 else {
@@ -171,10 +184,11 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
         try {
             res = Response.newBuilder().setMessage("Not a valid session").build();
             if (isValidSession(request.getUser(), request.getSessionid())) {
-                User user = users.get(request.getUser());
-                User friend = users.get(request.getFriend());
+                User user = getUser(request.getUser());
+                User friend = getUser(request.getFriend());
                 if (user != null && friend != null) {
                     user.removeFriend(friend);
+                    userDAO.updateUser(user);
                 }
                 res = Response.newBuilder().setMessage("friend removed").build();
             }
@@ -199,6 +213,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             User user = users.get(request.getNickname());
             user.setStatus(Status.SIGNEDOUT);
             user.setSessionId(null);
+            userDAO.updateUser(user);
             res = Response.newBuilder().setMessage("Bye").build();
         }
         catch(Exception ex){
@@ -218,7 +233,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     public void contacts (Request request, final StreamObserver<Response> observer) {
         Response res;
         try {
-            User user = users.get(request.getNickname());
+            User user = getUser(request.getNickname());
             if (isValidSession(request.getNickname(), request.getSessionid())) {
                 for (User u : user.getFriends()) {
                     res = Response.newBuilder().setMessage(u.getUserId() + ":" + u.getStatus()).build();
@@ -246,6 +261,22 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             return true;
         }
         return false;
+    }
+
+    /**
+     *
+     * @param userId
+     * @return returns user from cache otherwise mongodb
+     */
+    private User getUser(String userId) {
+        User user = users.get(userId);
+        if(user == null) {
+            user = userDAO.getUser(userId);
+            if(user != null)
+                users.put(userId, user);
+        }
+
+        return user;
     }
 
     /**
