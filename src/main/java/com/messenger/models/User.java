@@ -24,7 +24,7 @@ public class User {
     private String lastName;
     private String password;
     private Status status;
-    private List<User> friends;
+    private List<String> friends;
     private String sessionId;
 
     public User(String email, String userId, String password, String firstName, String lastName) {
@@ -34,7 +34,7 @@ public class User {
         this.lastName = lastName;
         this.password = password;
         this.status = Status.ACTIVE;
-        friends = new ArrayList<User>();
+        friends = new ArrayList<String>();
         sessionId = UUID.randomUUID().toString();
     }
 
@@ -94,19 +94,19 @@ public class User {
         this.status = status;
     }
 
-    public void addFriend(User user) {
-        friends.add(user);
+    public void addFriend(String userid) {
+        friends.add(userid);
     }
 
     public void removeFriend(User user) {
         friends.remove(user);
     }
 
-    public List<User> getFriends () {
+    public List<String> getFriends () {
         return this.friends;
     }
 
-    public void setFriends(List<User> friends) {
+    public void setFriends(List<String> friends) {
         this.friends = friends;
     }
 
@@ -116,6 +116,14 @@ public class User {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public boolean isFriendAlreadyAdded(String friendid) {
+        for(String u : friends){
+            if(u.equalsIgnoreCase(friendid))
+                return true;
+        }
+        return false;
     }
 
     @Override

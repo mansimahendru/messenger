@@ -38,7 +38,6 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     * users contains all the registered users.
     * I have used concurrenthashmap for both to achieve high concurrency as well as thread safety
      */
-    //TODO users need to be stored in permanent storage like mongodb.
     //TODO loggedin users data can be kept in distributed cache like teracotta etc.
     //TODO users logging in from multiple client sessions not implemented currently.
     //TODO - login method should connect to directory server and authenticate user
@@ -152,9 +151,14 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
                 User user = getUser(request.getUser());
                 User friend = getUser(request.getFriend());
                 if (user != null && friend != null) {
-                    user.addFriend(friend);
-                    userDAO.updateUser(user);
-                    res = Response.newBuilder().setMessage("friend added").build();
+                    if(!user.isFriendAlreadyAdded(friend.getUserId())) {
+                        user.addFriend(friend.getUserId());
+                        userDAO.updateUser(user);
+                        res = Response.newBuilder().setMessage("friend added").build();
+                    }
+                    else {
+                        res = Response.newBuilder().setMessage("friend already added").build();
+                    }
                 }
                 else {
                     res = Response.newBuilder().setMessage("No such user exist").build();
@@ -235,8 +239,9 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
         try {
             User user = getUser(request.getNickname());
             if (isValidSession(request.getNickname(), request.getSessionid())) {
-                for (User u : user.getFriends()) {
-                    res = Response.newBuilder().setMessage(u.getUserId() + ":" + u.getStatus()).build();
+                for (String u : user.getFriends()) {
+                    User friend = getUser(u);
+                    res = Response.newBuilder().setMessage(u + ":" + friend.getStatus()).build();
                     observer.onNext(res);
                 }
             }
