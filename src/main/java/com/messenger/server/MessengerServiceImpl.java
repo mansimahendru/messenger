@@ -118,6 +118,8 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
                 if(user.getPassword().equalsIgnoreCase(request.getPassword())) {
                     user.setStatus(Status.ACTIVE);
                     user.setSessionId(UUID.randomUUID().toString());
+                    users.put(user.getUserId(), user);
+                    userDAO.updateUser(user);
                     res = Response.newBuilder().setMessage(user.getSessionId()).build();
                 }
                 else {
@@ -218,6 +220,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
             user.setStatus(Status.SIGNEDOUT);
             user.setSessionId(null);
             userDAO.updateUser(user);
+            users.remove(request.getNickname());
             res = Response.newBuilder().setMessage("Bye").build();
         }
         catch(Exception ex){

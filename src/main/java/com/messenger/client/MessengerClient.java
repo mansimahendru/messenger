@@ -22,6 +22,7 @@ public class MessengerClient {
     private final MessengerServiceGrpc.MessengerServiceBlockingStub registerStub;
     private final MessengerServiceGrpc.MessengerServiceBlockingStub logoutStub;
     private final MessengerServiceGrpc.MessengerServiceBlockingStub friendStub;
+    private final MessengerServiceGrpc.MessengerServiceBlockingStub contactsStub;
     private final String userid;
     private String sessionid = null;
 
@@ -37,6 +38,7 @@ public class MessengerClient {
         registerStub = MessengerServiceGrpc.newBlockingStub(channel);
         logoutStub = MessengerServiceGrpc.newBlockingStub(channel);
         friendStub = MessengerServiceGrpc.newBlockingStub(channel);
+        contactsStub = MessengerServiceGrpc.newBlockingStub(channel);
     }
 
     public void shutdown() throws InterruptedException {
@@ -86,6 +88,15 @@ public class MessengerClient {
         System.out.println(res.getMessage());
     }
 
+    public void contacts(String userid) {
+        Request request = Request.newBuilder().setNickname(userid).setSessionid(this.sessionid).build();
+        Iterator<Response> c = contactsStub.contacts(request);
+        while(c.hasNext()){
+            Response response = c.next();
+            System.out.println(response.getMessage());
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         System.out.println("Starting client");
         MessengerClient client = null;
@@ -103,6 +114,8 @@ public class MessengerClient {
             client = new MessengerClient(userid);
             client.register(userid, email);
             client.login(userid, "password123");
+            System.out.println("contacts - ");
+            client.contacts(userid);
             Receiver receiver = new Receiver(client);
             Thread receiverThread = new Thread(receiver);
             receiverThread.start();
