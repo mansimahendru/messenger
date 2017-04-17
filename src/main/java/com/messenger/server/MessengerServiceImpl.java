@@ -42,10 +42,12 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     //TODO users logging in from multiple client sessions not implemented currently.
     //TODO - login method should connect to directory server and authenticate user
     private Map<String, User> users = new ConcurrentHashMap<String, User>();
-    private ExecutorService pool;
+    private ExecutorService receivePool;
+    private ExecutorService sendPool;
 
     public MessengerServiceImpl() {
-        pool = Executors.newCachedThreadPool();
+        receivePool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        sendPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
     /**
@@ -60,7 +62,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     @Override
     public void receive(ReceiveRequest request, StreamObserver<ChatMessage> chatObserver) {
         ReceiverMongoDBThread receiverThread = new ReceiverMongoDBThread(chatObserver, request.getUserid(), request.getSessionid());
-        pool.submit(receiverThread);
+        receivePool.submit(receiverThread);
     }
 
     /**
@@ -74,7 +76,7 @@ public class MessengerServiceImpl extends MessengerServiceGrpc.MessengerServiceI
     @Override
     public void send (ChatMessage chatMessage, final StreamObserver<Response> client) {
         SendMongoDBThread sendThread = new SendMongoDBThread(chatMessage, client);
-        pool.submit(sendThread);
+        sendPool.submit(sendThread);
     }
 
     /**
